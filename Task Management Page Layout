@@ -1,0 +1,138 @@
+import android.content.Intent;
+import android.database.Cursor;
+import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class Main2Activity<value> extends AppCompatActivity {
+    Database db;
+
+    Button buttonBack;
+    Button buttonSubmit;
+    Button buttonVA;
+    Button buttonDelete;
+
+    TextView dateInput;
+    EditText taskInput;
+    EditText locationInput;
+    EditText timeInput;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main2);
+
+        dateInput = (TextView) findViewById(R.id.dateView);
+
+        taskInput = (EditText) findViewById(R.id.taskInput);
+        locationInput = (EditText) findViewById(R.id.timeInput);
+        timeInput = (EditText) findViewById(R.id.locationInput);
+
+        insertTask();
+        getAllTask();
+        deleteTask();
+
+        db = new Database(this);
+
+        Button buttonBack = (Button) findViewById(R.id.backButton);
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                moveToMainActivity();
+            }
+        });
+
+        Intent intent = getIntent();
+        String msg = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
+        dateInput = findViewById(R.id.dateView);
+        dateInput.setText(msg);
+    }
+
+    // When the "Back" button is pressed, it will move to MainActivity1
+    private void moveToMainActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+    }
+
+    // Once the "Submit button is pressed, insertTask will insert the date that has been typed into
+    // the 3 PlainText's. If there is information in each text box, then "insert" will return true
+    // and create a toast that state that the info has been inserted.
+    public void insertTask() {
+        buttonSubmit = (Button) findViewById(R.id.submitButton);
+        buttonSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean insert = db.insertTask(dateInput.getText().toString(),
+                        taskInput.getText().toString(),
+                        timeInput.getText().toString(),
+                        locationInput.getText().toString());
+                if (insert) {
+                    Toast.makeText(Main2Activity.this, "Data has been inserted",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(Main2Activity.this, "Data has not been inserted",
+                            Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+    }
+    // method that displays a dialog box that is cancelable and shows the user the title of the
+    // task, long with the rest of the data that is in the same row as the task (content).
+    public void displayTask(String task, String content) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle(task);
+        builder.setMessage(content);
+        builder.show();
+    }
+
+    public void getAllTask() {
+        buttonVA = (Button) findViewById(R.id.buttonViewAll);
+        buttonVA.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Cursor result = db.getAllTask();
+                if (result.getCount() == 0) {
+                    displayTask("Sorry", "No Task to Display!");
+                } else {
+                    StringBuffer buffer = new StringBuffer();
+                    while (result.moveToNext()) {
+                        buffer.append("" + result.getString(1) + "\n");
+                        buffer.append("Task Name: " + result.getString(2) + "\n");
+                        buffer.append("Location: " + result.getString(3) + "\n");
+                        buffer.append("Time: " + result.getString(4) + "\n\n");
+                    }
+                    displayTask("Task List", buffer.toString());
+                }
+            }
+
+        });
+    }
+    // calls deleteTask method and will display a dialog message (AlertDialog.Builder) that will
+    // notify the user if the task was successfully deleted or not by displaying a message
+    public void deleteTask() {
+        buttonDelete = (Button) findViewById(R.id.buttonDT);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Delete Status");
+        builder.setCancelable(true);
+        buttonDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean isDeleted = db.deleteTask(taskInput.getText().toString());
+                // get boolean value from deleteTask method in Database class
+                if(isDeleted) {
+                    builder.setMessage("Successfully Deleted");
+                    builder.show();
+                }else {
+                    builder.setMessage("Delete Unsuccessful!");
+                    builder.show();
+                }
+            }
+        });
+    }
+}
