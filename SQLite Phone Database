@@ -1,0 +1,71 @@
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+
+// This is the database class tha we will use in add, delete, and show everything that we have
+// inserted
+public class Database extends SQLiteOpenHelper{
+
+    // Specifies both the database and table name.a
+    private static final String DATABASE_NAME = "javaProject.db";
+    private static final String TABLE_NAME = "app_table";
+
+    public Database(Context context) {
+        super(context,DATABASE_NAME,null,2);
+    }
+
+    // created database table using the table name that we passed to it and specifying each
+    // column name.
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL ("create table " + TABLE_NAME + "(ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "DATE TEXT, TASK TEXT, TIME TEXT, LOCATION TEXT)");
+    }
+
+    // If the table exists, already, this method will "DROP", or delete the table since there is
+    // already a table active with that name. The "IF EXISTS" helps regulate which table is dropped,
+    // dropping a table if and only if there is already a table, preventing errors.
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(db);
+    }
+
+    // inserts data that user inputs into specific column names. Also checks to make sure that
+    // data was inputted correctly.
+    public boolean insertTask (String date, String taskName, String time, String location) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put("DATE", date);
+        contentValues.put("TASK", taskName);
+        contentValues.put("TIME", time);
+        contentValues.put("LOCATION", location);
+       long result = db.insert(TABLE_NAME,null, contentValues);
+        if(result == -1)
+            return false;
+        else
+            return true;
+    }
+
+    // gets the data and append to a list
+public Cursor getAllTask() {
+    SQLiteDatabase db = this.getWritableDatabase();
+    Cursor cu = db.rawQuery("select * from " + TABLE_NAME,null);
+    return  cu;
+}
+
+    // Gets whatever is in the "TASK" column, and deletes the whole row connected to the
+    // selected task. If there is nothing in the specific "TASK" columns, then method will return false
+public boolean deleteTask(String task) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        String[]condition = {task};
+        int result = db.delete(TABLE_NAME,"TASK = ?", condition);
+        if (result > 0)
+            return true;
+        else
+            return false;
+}
+}
